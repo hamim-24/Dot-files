@@ -13,6 +13,7 @@ ZSH_THEME="powerlevel10k/powerlevel10k"
 #  cd "$(find . -type d | fzf)"
 #}
 
+# it can search the file outside the directory
 cddir() {
     local base_dir="${1:-$HOME}"  # Default to ~ if no input
     base_dir="${base_dir/#\~/$HOME}"  # Expand ~
