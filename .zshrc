@@ -1,0 +1,1 @@
+/Users/Inz_mac/.zshrc
