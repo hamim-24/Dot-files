@@ -104,3 +104,4 @@ export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init --path)"
 eval "$(pyenv init -)"
+export JAVA_HOME=/opt/homebrew/Cellar/openjdk/25
