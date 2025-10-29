@@ -55,6 +55,8 @@ plugins=(
   fzf
   z
   extract
+  web-search
+  
 )
 
 # Load Oh My Zsh (must come BEFORE binding keys)
