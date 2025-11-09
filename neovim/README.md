@@ -40,7 +40,25 @@ Built-in support for multiple languages including:
   - Find references (`gr`)
   - Go to implementation (`gi`)
   - Rename symbol (`<leader>rn`)
-- Autocompletion via `nvim-cmp` (Lua) or `coc.nvim` (Vim)
+
+- Smart Autocompletion (via `nvim-cmp`):
+  - Automatic suggestions after typing 2 characters (configurable)
+  - Multiple completion sources with priorities:
+    - LSP suggestions (highest priority)
+    - Snippets (LuaSnip)
+    - Buffer words (current file)
+    - File paths
+    - Command-line completions
+  - Visual indicators for suggestion sources (e.g. `[LSP]`, `[Buffer]`, `[Path]`)
+  - Default behavior and keybindings:
+    - Suggestions appear automatically once you type two characters
+    - `Tab` / `Shift-Tab` — Navigate suggestions
+    - `Enter` — Accept suggestion
+    - `Ctrl+Space` — Manually trigger suggestions
+    - `Ctrl+n` / `Ctrl+p` — Alternative navigation
+    - `Ctrl+d` / `Ctrl+u` — Scroll documentation
+    - `Ctrl+e` — Close suggestion window
+
 - Treesitter for advanced syntax highlighting
 - Rainbow parentheses for nested structures
 - Auto-formatting on save
