@@ -1,0 +1,23 @@
+
+## ─────── VS Code Dark Nano Theme (macOS-safe) ───────
+
+## Load syntax definitions
+include ~/.nano/*.nanorc
+
+## Basic behavior
+set linenumbers
+set softwrap
+set tabsize 4
+set autoindent
+set mouse
+
+## Simple color tweaks
+set titlecolor brightwhite,blue
+set statuscolor brightwhite,black
+set selectedcolor black,white
+set numbercolor cyan
+
+## Make comments, strings, etc. visible through syntax files
+# (colors defined inside the .nanorc language files)
+
+## Important: use a dark terminal background (like "Pro" or "Tango Dark")
