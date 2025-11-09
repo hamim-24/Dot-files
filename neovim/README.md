@@ -67,7 +67,15 @@ Built-in support for multiple languages including:
 
 1. Clone this repository:
 ```bash
-git clone https://github.com/hamim-24/Dot-files.git ~/.config/
+# First create the necessary directories
+mkdir -p ~/.config/nvim
+
+# Clone the repository
+git clone https://github.com/hamim-24/Dot-files.git
+
+# Copy Neovim configuration files to the correct location
+cp -r Dot-files/neovim/init.lua ~/.config/nvim/
+cp -r Dot-files/neovim/init.vim ~/.config/nvim/    # If you want to use the Vim script version, it is the backdated
 ```
 
 2. Install the required dependencies:
