@@ -33,11 +33,29 @@ cp .nanorc ~/.nanorc
 mkdir -p ~/.nano
 ```
 
-3. Install syntax highlighting files (if not included):
+3. Install syntax highlighting files:
 ```bash
-# You can get these from https://github.com/scopatz/nanorc
-# or use your package manager
+# Clone the nanorc repository
+git clone https://github.com/scopatz/nanorc.git ~/.nano-syntax
+
+# Copy all syntax highlighting files to ~/.nano
+cp ~/.nano-syntax/*.nanorc ~/.nano/
+
+# Clean up
+rm -rf ~/.nano-syntax
+
+# Alternative method using Homebrew (on macOS):
+brew install nano
+# This will install nano with syntax highlighting files in $(brew --prefix)/share/nano
 ```
+
+4. Verify installation:
+```bash
+# Check if syntax files are present
+ls ~/.nano/*.nanorc
+```
+
+Note: The configuration looks for syntax highlighting files in `~/.nano/*.nanorc`. Make sure these files are properly installed for syntax highlighting to work.
 
 ## Configuration Details
 
