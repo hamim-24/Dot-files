@@ -45,6 +45,23 @@ require("lazy").setup({
   "nvim-lualine/lualine.nvim",       -- Status line
   "nvim-tree/nvim-tree.lua",         -- File explorer
   "nvim-tree/nvim-web-devicons",     -- Icons
+  -- Yank/copy history and improved paste handling (copy/paste setup)
+  {
+    "gbprod/yanky.nvim",
+    config = function()
+      require("yanky").setup({
+        ring = { history_length = 100 },
+        highlight = { on_put = true, on_yank = true },
+        preserve_cursor_position = {
+          enabled = true,
+        },
+      })
+
+      -- Convenient mappings for paste
+      -- vim.keymap.set("n", "p", "<Plug>(YankyPutAfter)")
+      -- vim.keymap.set("n", "P", "<Plug>(YankyPutBefore)")
+    end,
+  },
   { "Mofiqul/vscode.nvim", lazy = false }, -- VSCode color theme (dark)
   { "p00f/nvim-ts-rainbow", event = "BufRead" }, -- rainbow parentheses
   {
@@ -175,6 +192,23 @@ vim.o.tabstop = 4
 vim.o.shiftwidth = 4
 vim.o.expandtab = true
 vim.o.mouse = "a"
+-- Use system clipboard (macOS clipboard integration)
+vim.opt.clipboard = "unnamedplus"
+-- Match your Vimscript backup: set leader to comma
+vim.g.mapleader = ","
+
+-- Yank to system clipboard in visual mode (like your init.vim.backup)
+vim.keymap.set('v', '<leader>y', '"+y', { noremap = true, silent = true })
+
+-- Bind paste to Ctrl+P in multiple modes
+-- Normal: use yanky put after (same as 'p')
+vim.keymap.set('n', '<C-p>', '<Plug>(YankyPutAfter)', { noremap = true, silent = true })
+-- Normal (shift): put before (same as 'P')
+vim.keymap.set('n', '<C-P>', '<Plug>(YankyPutBefore)', { noremap = true, silent = true })
+-- Visual: replace selection with system clipboard (explicit)
+vim.keymap.set('v', '<C-p>', '"+p', { noremap = true, silent = true })
+-- Insert: paste from system clipboard into insert mode
+vim.keymap.set('i', '<C-p>', '<C-R>+', { noremap = true, silent = true })
 
 -- Statusline
 require("lualine").setup {
