@@ -36,11 +36,6 @@ cddir() {
     fi
 }
 
-# search a file with preview and open with nvim 
-alias openWithNvim='nvim $(fzf -m --preview="bat --color=always {}")'
-
-EDITOR='nvim'
-
 
 # Oh My Zsh base
 export ZSH="$HOME/.oh-my-zsh"
@@ -56,7 +51,6 @@ plugins=(
   z
   extract
   web-search
-  
 )
 
 # Load Oh My Zsh (must come BEFORE binding keys)
@@ -64,6 +58,17 @@ source $ZSH/oh-my-zsh.sh
 
 # Manually source autosuggestions (after Oh My Zsh)
 source $ZSH_CUSTOM/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
+
+
+
+# search a file with preview and open with nvim 
+alias openWithNvim='nvim $(fzf -m --preview="bat --color=always {}")'
+alias ls='eza'
+alias cat='bat'
+
+EDITOR='nvim'
+
+
 
 # Make TAB accept autosuggestions
 # Restore default Right Arrow behavior
@@ -107,3 +112,30 @@ export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init --path)"
 eval "$(pyenv init -)"
 export JAVA_HOME=/opt/homebrew/Cellar/openjdk/25
+
+# enable 24-bit color in terminal
+export TERM=xterm-256color
+export COLORTERM=truecolor
+export PATH="/opt/homebrew/bin:$PATH"
+export CPLEX_HOME=/Users/Inz_mac/Applications/CPLEX_Studio_Community2212/cplex
+export DYLD_LIBRARY_PATH=$CPLEX_HOME/lib/arm64_osx/static_pic:$DYLD_LIBRARY_PATH
+export PATH=$CPLEX_HOME/bin:$PATH
+
+
+# Added by Antigravity
+export PATH="/Users/Inz_mac/.antigravity/antigravity/bin:$PATH"
+
+# >>> conda initialize >>>
+# !! Contents within this block are managed by 'conda init' !!
+__conda_setup="$('/Users/Inz_mac/miniconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
+if [ $? -eq 0 ]; then
+    eval "$__conda_setup"
+else
+    if [ -f "/Users/Inz_mac/miniconda3/etc/profile.d/conda.sh" ]; then
+        . "/Users/Inz_mac/miniconda3/etc/profile.d/conda.sh"
+    else
+        export PATH="/Users/Inz_mac/miniconda3/bin:$PATH"
+    fi
+fi
+unset __conda_setup
+# <<< conda initialize <<<
