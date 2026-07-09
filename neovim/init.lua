@@ -1,425 +1,172 @@
--- ==============================
--- Neovim IDE Setup (Stable & Modern)
--- ==============================
-
--- Suppress specific Treesitter errors
-do
-  local orig_notify = vim.notify
-  vim.notify = function(msg, level, opts)
-    if type(msg) == "string" and (
-      msg:match("Invalid value for argument type: b") or
-      msg:match("Error executing vim.schedule lua callback")
-    ) then
-      return  -- silently ignore these errors
-    end
-    return orig_notify(msg, level, opts)
-  end
-end
-
--- Install lazy.nvim if not installed
+-- Bootstrap lazy.nvim
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.loop.fs_stat(lazypath) then
-  vim.fn.system({
-    "git", "clone", "--filter=blob:none",
-    "https://github.com/folke/lazy.nvim.git",
-    "--branch=stable", lazypath,
-  })
+  vim.fn.system({ "git", "clone", "--filter=blob:none",
+    "https://github.com/folke/lazy.nvim.git", "--branch=stable", lazypath })
 end
 vim.opt.rtp:prepend(lazypath)
 
--- ==============================
 -- Plugins
--- ==============================
 require("lazy").setup({
-  -- Core IDE plugins
-  "neovim/nvim-lspconfig",           -- LSP support
-  "williamboman/mason.nvim",         -- LSP/DAP installer
-  "williamboman/mason-lspconfig.nvim",
-  "hrsh7th/nvim-cmp",                -- Autocompletion
-  "hrsh7th/cmp-nvim-lsp",           -- LSP source for nvim-cmp
-  "hrsh7th/cmp-buffer",             -- Buffer completions
-  "hrsh7th/cmp-path",               -- Path completions
-  "hrsh7th/cmp-cmdline",            -- Command-line completions
-  "L3MON4D3/LuaSnip",                -- Snippets
-  "nvim-treesitter/nvim-treesitter", -- Syntax highlighting
-  "nvim-lualine/lualine.nvim",       -- Status line
-  "nvim-tree/nvim-tree.lua",         -- File explorer
-  "nvim-tree/nvim-web-devicons",     -- Icons
-  -- Yank/copy history and improved paste handling (copy/paste setup)
-  {
-    "gbprod/yanky.nvim",
-    config = function()
-      require("yanky").setup({
-        ring = { history_length = 100 },
-        highlight = { on_put = true, on_yank = true },
-        preserve_cursor_position = {
-          enabled = true,
-        },
-      })
-
-      -- Convenient mappings for paste
-      -- vim.keymap.set("n", "p", "<Plug>(YankyPutAfter)")
-      -- vim.keymap.set("n", "P", "<Plug>(YankyPutBefore)")
-    end,
-  },
-  { "Mofiqul/vscode.nvim", lazy = false }, -- VSCode color theme (dark)
-  { "p00f/nvim-ts-rainbow", event = "BufRead" }, -- rainbow parentheses
-  {
-    "nvim-treesitter/nvim-treesitter-context",
-    event = "VeryLazy",
-    cond = function()
-      -- More thorough dependency check
-      local ok1, parsers = pcall(require, "nvim-treesitter.parsers")
-      if not ok1 then return false end
-      
-      local ok2, ts = pcall(require, "nvim-treesitter")
-      if not ok2 then return false end
-      
-      -- Check if we have any parsers installed
-      local has_parsers = false
-      for _, parser in pairs(parsers.list) do
-        if parsers.has_parser(parser) then
-          has_parsers = true
-          break
-        end
-      end
-      
-      return has_parsers
-    end
-  }
+  { "Mofiqul/vscode.nvim" },
+  { "nvim-treesitter/nvim-treesitter", build = ":TSUpdate" },
+  { "nvim-lualine/lualine.nvim" },
+  { "nvim-tree/nvim-tree.lua" },
+  { "nvim-tree/nvim-web-devicons" },
+  { "williamboman/mason.nvim" },
+  { "williamboman/mason-lspconfig.nvim" },
+  { "neovim/nvim-lspconfig" },
+  { "hrsh7th/nvim-cmp" },
+  { "hrsh7th/cmp-nvim-lsp" },
+  { "hrsh7th/cmp-buffer" },
+  { "hrsh7th/cmp-path" },
+  { "L3MON4D3/LuaSnip" },
 })
 
--- ==============================
--- UI Settings
--- ==============================
+-- Options
 vim.o.termguicolors = true
--- Setup VSCode dark theme with semantic highlighting
-pcall(function()
-  require('vscode').setup({ 
-    style = 'dark',
-    transparent = false,
-    italic_comments = true,
-    disable_nvimtree_bg = true,
-  })
-  vim.cmd([[colorscheme vscode]])
+vim.o.number        = true
+vim.o.tabstop       = 4
+vim.o.shiftwidth    = 4
+vim.o.expandtab     = true
+vim.o.mouse         = "a"
+vim.opt.clipboard   = "unnamedplus"
+vim.g.mapleader     = ","
 
-  -- Brighter, more vibrant colors
-  local colors = {
-    vscBlue = '#00D9FF',       -- variables (brighter cyan-blue)
-    vscYellow = '#FFE66D',     -- functions (brighter yellow)
-    vscGreen = '#4FFFB0',      -- types/classes (brighter green)
-    vscRed = '#FF6B6B',        -- errors (brighter red)
-    vscOrange = '#FFB86C',     -- strings (brighter orange)
-    vscMagenta = '#FF79C6',    -- control flow (brighter magenta)
-    vscGrey = '#A0A0A0',       -- comments (lighter grey)
-    vscViolet = '#BD93F9',     -- constants (brighter violet)
-  }
+-- Theme
+require("vscode").setup({ style = "dark" })
+vim.cmd("colorscheme vscode")
 
-  -- Set up semantic token highlights
-  local function hi(name, opts)
-    vim.api.nvim_set_hl(0, name, opts)
-  end
-
-  -- Variables and properties - bright cyan with bold
-  hi('Identifier', { fg = colors.vscBlue, bold = true })
-  hi('@variable', { fg = colors.vscBlue, bold = true })
-  hi('@property', { fg = colors.vscBlue, bold = true })
-  hi('@parameter', { fg = colors.vscBlue })
-
-  -- Functions and methods - bright yellow with bold
-  hi('Function', { fg = colors.vscYellow, bold = true })
-  hi('@function', { fg = colors.vscYellow, bold = true })
-  hi('@method', { fg = colors.vscYellow, bold = true })
-
-  -- Types and classes - bright green with bold
-  hi('@type', { fg = colors.vscGreen, bold = true })
-  hi('@constructor', { fg = colors.vscGreen, bold = true })
-
-  -- Control flow - bright magenta with bold
-  hi('@keyword', { fg = colors.vscMagenta, bold = true })
-  hi('@conditional', { fg = colors.vscMagenta, bold = true })
-  hi('@repeat', { fg = colors.vscMagenta, bold = true })
-
-  -- Constants and strings - bright with bold
-  hi('@string', { fg = colors.vscOrange, bold = true })
-  hi('@constant', { fg = colors.vscViolet, bold = true })
-  hi('@number', { fg = colors.vscViolet, bold = true })
-
-  -- Comments
-  hi('@comment', { fg = colors.vscGrey, italic = true })
-  
-  -- Make operators and punctuation colorful
-  hi('@operator', { fg = '#FF79C6', bold = true })
-  hi('@punctuation.bracket', { fg = '#8BE9FD', bold = true })
-  hi('@punctuation.delimiter', { fg = '#50FA7B' })
-  
-  -- Bash/Shell specific highlights
-  hi('@function.builtin.bash', { fg = colors.vscYellow, bold = true })
-  hi('@constant.builtin.bash', { fg = colors.vscViolet, bold = true })
-  hi('@variable.builtin.bash', { fg = colors.vscBlue, bold = true })
-  hi('@string.special.path.bash', { fg = colors.vscOrange, bold = true })
-  hi('@keyword.bash', { fg = colors.vscMagenta, bold = true })
-  
-  -- Zsh specific highlights
-  hi('@function.builtin.zsh', { fg = colors.vscYellow, bold = true })
-  hi('@constant.builtin.zsh', { fg = colors.vscViolet, bold = true })
-  hi('@variable.builtin.zsh', { fg = colors.vscBlue, bold = true })
-  hi('@string.special.path.zsh', { fg = colors.vscOrange, bold = true })
-  hi('@keyword.zsh', { fg = colors.vscMagenta, bold = true })
-end)
-
--- VSCode-like highlight tweaks: make variables, functions and delimiters stand out
-pcall(function()
-  -- Brighter, more vibrant palette
-  local pal = {
-    variable = "#00D9FF",   -- bright cyan
-    func = "#FFE66D",       -- bright yellow
-    delimiter1 = "#FF6B6B", -- bright red
-    delimiter2 = "#FFE66D", -- bright yellow
-    delimiter3 = "#50FA7B", -- bright green
-    delimiter4 = "#8BE9FD", -- bright blue
-    delimiter5 = "#FF79C6", -- bright pink
-    delimiter6 = "#00FFFF", -- bright cyan
-  }
-
-  -- Treesitter groups with bold
-  vim.api.nvim_set_hl(0, "TSVariable", { fg = pal.variable, bold = true })
-  vim.api.nvim_set_hl(0, "TSProperty", { fg = pal.variable, bold = true })
-  vim.api.nvim_set_hl(0, "Identifier", { fg = pal.variable, bold = true })
-  vim.api.nvim_set_hl(0, "TSFunction", { fg = pal.func, bold = true })
-  vim.api.nvim_set_hl(0, "Function", { fg = pal.func, bold = true })
-  vim.api.nvim_set_hl(0, "TSParameter", { fg = pal.variable })
-
-  -- Rainbow delimiter groups with bold
-  vim.api.nvim_set_hl(0, "RainbowDelimiterRed", { fg = pal.delimiter1, bold = true })
-  vim.api.nvim_set_hl(0, "RainbowDelimiterGreen", { fg = pal.delimiter3, bold = true })
-  vim.api.nvim_set_hl(0, "RainbowDelimiterYellow", { fg = pal.delimiter2, bold = true })
-  vim.api.nvim_set_hl(0, "RainbowDelimiterBlue", { fg = pal.delimiter4, bold = true })
-  vim.api.nvim_set_hl(0, "RainbowDelimiterViolet", { fg = pal.delimiter5, bold = true })
-  vim.api.nvim_set_hl(0, "RainbowDelimiterCyan", { fg = pal.delimiter6, bold = true })
-
-  -- Some rainbow plugins use numbered groups
-  vim.api.nvim_set_hl(0, "RainbowDelimiter1", { fg = pal.delimiter1, bold = true })
-  vim.api.nvim_set_hl(0, "RainbowDelimiter2", { fg = pal.delimiter2, bold = true })
-  vim.api.nvim_set_hl(0, "RainbowDelimiter3", { fg = pal.delimiter3, bold = true })
-  vim.api.nvim_set_hl(0, "RainbowDelimiter4", { fg = pal.delimiter4, bold = true })
-  vim.api.nvim_set_hl(0, "RainbowDelimiter5", { fg = pal.delimiter5, bold = true })
-  vim.api.nvim_set_hl(0, "RainbowDelimiter6", { fg = pal.delimiter6, bold = true })
-end)
-vim.o.number = true
-vim.o.relativenumber = false
-vim.o.tabstop = 4
-vim.o.shiftwidth = 4
-vim.o.expandtab = true
-vim.o.mouse = "a"
--- Use system clipboard (macOS clipboard integration)
-vim.opt.clipboard = "unnamedplus"
--- Match your Vimscript backup: set leader to comma
-vim.g.mapleader = ","
-
--- Yank to system clipboard in visual mode (like your init.vim.backup)
-vim.keymap.set('v', '<leader>y', '"+y', { noremap = true, silent = true })
-
--- Bind paste to Ctrl+P in multiple modes
--- Normal: use yanky put after (same as 'p')
-vim.keymap.set('n', '<C-p>', '<Plug>(YankyPutAfter)', { noremap = true, silent = true })
--- Normal (shift): put before (same as 'P')
-vim.keymap.set('n', '<C-P>', '<Plug>(YankyPutBefore)', { noremap = true, silent = true })
--- Visual: replace selection with system clipboard (explicit)
-vim.keymap.set('v', '<C-p>', '"+p', { noremap = true, silent = true })
--- Insert: paste from system clipboard into insert mode
-vim.keymap.set('i', '<C-p>', '<C-R>+', { noremap = true, silent = true })
-
--- Statusline
-require("lualine").setup {
-  options = { theme = "auto" }, -- let lualine adapt to the active colorscheme
+-- VSCode Dark+ colors
+local hi = vim.api.nvim_set_hl
+local c = {
+  blue    = "#4ebffc",   -- variables
+  yellow  = "#fdfd32",   -- functions
+  teal    = "#4EC9B0",   -- types
+  orange  = "#CE9178",   -- strings
+  purple  = "#C586C0",   -- keywords
+  green   = "#6A9955",   -- comments
+  lime    = "#dff4c1",   -- constants
+  white   = "#D4D4D4",   -- text
+  red     = "#F44747",   -- errors/delimiter1
+  dyellow = "#E5C07B",   -- delimiter2
+  dgreen  = "#98C379",   -- delimiter3
+  dblue   = "#61AFEF",   -- delimiter4
+  dpurple = "#C678DD",   -- delimiter5
+  cyan    = "#56B6C2",   -- delimiter6
 }
+
+-- Base groups
+hi(0, "Normal",     { fg = c.white, bold = true })
+hi(0, "Identifier", { fg = c.blue, bold = true })
+hi(0, "Function",   { fg = c.yellow, bold = true })
+hi(0, "Statement",  { fg = c.purple, bold = true })
+hi(0, "Keyword",    { fg = c.purple, bold = true })
+hi(0, "Type",       { fg = c.teal, bold = true })
+hi(0, "PreProc",    { fg = c.purple, bold = true })
+hi(0, "String",     { fg = c.orange, bold = true })
+hi(0, "Number",     { fg = c.lime, bold = true })
+hi(0, "Constant",   { fg = c.lime, bold = true })
+hi(0, "Comment",    { fg = c.green, italic = true, bold = true })
+hi(0, "Operator",   { fg = c.white, bold = true })
+hi(0, "Special",    { fg = c.orange, bold = true })
+
+-- Treesitter groups
+hi(0, "@variable",              { fg = c.blue, bold = true })
+hi(0, "@variable.builtin",      { fg = c.blue, bold = true })
+hi(0, "@variable.parameter",    { fg = c.blue, bold = true })
+hi(0, "@property",              { fg = c.blue, bold = true })
+hi(0, "@function",              { fg = c.yellow, bold = true })
+hi(0, "@function.builtin",      { fg = c.yellow, bold = true })
+hi(0, "@function.call",         { fg = c.yellow, bold = true })
+hi(0, "@method",                { fg = c.yellow, bold = true })
+hi(0, "@method.call",           { fg = c.yellow, bold = true })
+hi(0, "@type",                  { fg = c.teal, bold = true })
+hi(0, "@type.builtin",          { fg = c.teal, bold = true })
+hi(0, "@constructor",           { fg = c.teal, bold = true })
+hi(0, "@keyword",               { fg = c.purple, bold = true })
+hi(0, "@keyword.function",      { fg = c.purple, bold = true })
+hi(0, "@keyword.return",        { fg = c.purple, bold = true })
+hi(0, "@keyword.operator",      { fg = c.purple, bold = true })
+hi(0, "@conditional",           { fg = c.purple, bold = true })
+hi(0, "@repeat",                { fg = c.purple, bold = true })
+hi(0, "@include",               { fg = c.purple, bold = true })
+hi(0, "@exception",             { fg = c.purple, bold = true })
+hi(0, "@string",                { fg = c.orange, bold = true })
+hi(0, "@string.escape",         { fg = c.yellow, bold = true })
+hi(0, "@number",                { fg = c.lime, bold = true })
+hi(0, "@float",                 { fg = c.lime, bold = true })
+hi(0, "@boolean",               { fg = c.lime, bold = true })
+hi(0, "@constant",              { fg = c.blue, bold = true })
+hi(0, "@constant.builtin",      { fg = c.blue, bold = true })
+hi(0, "@comment",               { fg = c.green, italic = true, bold = true })
+hi(0, "@operator",              { fg = c.white, bold = true })
+hi(0, "@punctuation.bracket",   { fg = c.red, bold = true })
+hi(0, "@punctuation.delimiter", { fg = c.dgreen, bold = true })
+hi(0, "RainbowDelimiterRed",    { fg = c.red, bold = true })
+hi(0, "RainbowDelimiterYellow", { fg = c.dyellow, bold = true })
+hi(0, "RainbowDelimiterGreen",  { fg = c.dgreen, bold = true })
+hi(0, "RainbowDelimiterBlue",   { fg = c.dblue, bold = true })
+hi(0, "RainbowDelimiterViolet", { fg = c.dpurple, bold = true })
+hi(0, "RainbowDelimiterCyan",   { fg = c.cyan, bold = true })
+hi(0, "@tag",                   { fg = c.blue, bold = true })
+hi(0, "@tag.attribute",         { fg = c.teal, bold = true })
+hi(0, "@tag.delimiter",         { fg = c.white, bold = true })
+
+-- Treesitter
+require("nvim-treesitter").setup({
+  ensure_installed = { "c", "cpp", "lua", "python", "javascript", "typescript",
+                       "bash", "html", "css", "json", "yaml", "markdown", "java" },
+  auto_install = true,
+  highlight = { enable = true },
+  indent    = { enable = true },
+})
+
+-- Status line
+require("lualine").setup({ options = { theme = "vscode" } })
 
 -- File explorer
-require("nvim-tree").setup {}
+require("nvim-tree").setup()
+vim.keymap.set("n", "<C-n>", ":NvimTreeToggle<CR>", { silent = true })
 
--- ==============================
--- Mason & LSP Setup
--- ==============================
+-- Mason + LSP
 require("mason").setup()
-require("mason-lspconfig").setup {
-  ensure_installed = { "lua_ls", "pyright", "ts_ls", "bashls" },
+require("mason-lspconfig").setup({
+  ensure_installed = { "lua_ls", "pyright", "ts_ls", "bashls", "clangd", "jdtls" },
   automatic_installation = true,
-}
+})
 
--- Capabilities for autocomplete
-local capabilities = require("cmp_nvim_lsp").default_capabilities()
-
--- Attach function (for keymaps, etc.)
+local caps = require("cmp_nvim_lsp").default_capabilities()
 local on_attach = function(_, bufnr)
-  local bufmap = function(mode, lhs, rhs)
-    vim.api.nvim_buf_set_keymap(bufnr, mode, lhs, rhs, { noremap = true, silent = true })
+  local map = function(lhs, rhs)
+    vim.api.nvim_buf_set_keymap(bufnr, "n", lhs, rhs, { noremap = true, silent = true })
   end
-  bufmap("n", "gd", "<cmd>lua vim.lsp.buf.definition()<CR>")
-  bufmap("n", "K", "<cmd>lua vim.lsp.buf.hover()<CR>")
-  bufmap("n", "gr", "<cmd>lua vim.lsp.buf.references()<CR>")
-  bufmap("n", "gi", "<cmd>lua vim.lsp.buf.implementation()<CR>")
-  bufmap("n", "<leader>rn", "<cmd>lua vim.lsp.buf.rename()<CR>")
+  map("gd", "<cmd>lua vim.lsp.buf.definition()<CR>")
+  map("K",  "<cmd>lua vim.lsp.buf.hover()<CR>")
+  map("gr", "<cmd>lua vim.lsp.buf.references()<CR>")
+  map("<leader>rn", "<cmd>lua vim.lsp.buf.rename()<CR>")
 end
 
--- Safe LSP setup (avoids deprecated calls)
--- LSP setup using the new vim.lsp.config API
-local servers = { "lua_ls", "pyright", "ts_ls", "bashls" }
-
-for _, server in ipairs(servers) do
-  vim.lsp.config[server] = {
-    on_attach = on_attach,
-    capabilities = capabilities,
-  }
+for _, server in ipairs({ "lua_ls", "pyright", "ts_ls", "bashls", "clangd", "jdtls" }) do
+  vim.lsp.config[server] = { on_attach = on_attach, capabilities = caps }
+  vim.lsp.enable(server)
 end
 
--- ==============================
--- Treesitter Setup (Safe Mode)
--- ==============================
-require("nvim-treesitter.configs").setup {
-  ensure_installed = { "lua", "python", "javascript", "bash", "html", "css" },
-  highlight = { 
-    enable = true,
-    additional_vim_regex_highlighting = false, -- disable vim regex highlighting for better performance
-  },
-  indent = { enable = true },
-  auto_install = true,
-  -- Rainbow parentheses configuration
-  rainbow = {
-    enable = true,
-    extended_mode = true,    -- Also highlight non-bracket delimiters
-    max_file_lines = 1000,   -- Performance optimization
-    colors = {               -- VSCode-like colors
-      "#E06C75", -- red
-      "#E5C07B", -- yellow
-      "#98C379", -- green
-      "#61AFEF", -- blue
-      "#C678DD", -- purple
-      "#56B6C2", -- cyan
-    },
-  },
-}
-
--- ==============================
--- Autocompletion Setup
--- ==============================
+-- Autocompletion
 local cmp = require("cmp")
-
--- Better suggestion menu
-vim.opt.completeopt = "menu,menuone,noselect"
-
-cmp.setup {
-  completion = {
-    keyword_length = 2, -- show completion after 2 characters
-    keyword_pattern = [[\k\+]], -- pattern to trigger completion
-    autocomplete = { "TextChanged" }, -- trigger on text change
-  },
-  snippet = {
-    expand = function(args)
-      require("luasnip").lsp_expand(args.body)
-    end,
-  },
-  window = {
-    completion = cmp.config.window.bordered(),
-    documentation = cmp.config.window.bordered(),
-  },
+cmp.setup({
+  snippet = { expand = function(args) require("luasnip").lsp_expand(args.body) end },
   mapping = cmp.mapping.preset.insert({
+    ["<CR>"]      = cmp.mapping.confirm({ select = true }),
+    ["<Tab>"]     = cmp.mapping.select_next_item(),
+    ["<S-Tab>"]   = cmp.mapping.select_prev_item(),
     ["<C-Space>"] = cmp.mapping.complete(),
-    ["<CR>"] = cmp.mapping.confirm({ select = true }),
-    ["<Tab>"] = cmp.mapping.select_next_item(),
-    ["<S-Tab>"] = cmp.mapping.select_prev_item(),
-    ["<C-n>"] = cmp.mapping.select_next_item(),
-    ["<C-p>"] = cmp.mapping.select_prev_item(),
-    ["<C-d>"] = cmp.mapping.scroll_docs(4),
-    ["<C-u>"] = cmp.mapping.scroll_docs(-4),
-    ["<C-e>"] = cmp.mapping.abort(),
+    ["<C-e>"]     = cmp.mapping.abort(),
   }),
   sources = cmp.config.sources({
-    { name = "nvim_lsp", priority = 1000 },
-    { name = "luasnip", priority = 750 },
-    { name = "buffer", priority = 500 },
-    { name = "path", priority = 250 },
+    { name = "nvim_lsp" },
+    { name = "luasnip" },
+    { name = "buffer" },
+    { name = "path" },
   }),
-  formatting = {
-    format = function(entry, vim_item)
-      -- Add source name to the menu
-      vim_item.menu = ({
-        nvim_lsp = "[LSP]",
-        luasnip = "[Snippet]",
-        buffer = "[Buffer]",
-        path = "[Path]",
-      })[entry.source.name]
-      return vim_item
-    end
-  },
-}
-
--- Use buffer source for `/` and `?` (if you enabled `native_menu`, this won't work anymore).
-cmp.setup.cmdline({ '/', '?' }, {
-  mapping = cmp.mapping.preset.cmdline(),
-  sources = {
-    { name = 'buffer' }
-  }
 })
-
--- Use cmdline & path source for ':' (if you enabled `native_menu`, this won't work anymore).
-cmp.setup.cmdline(':', {
-  mapping = cmp.mapping.preset.cmdline(),
-  sources = cmp.config.sources({
-    { name = 'path' },
-    { name = 'cmdline' }
-  })
-})
-
--- ==============================
--- Treesitter Context Setup (Safe Mode)
--- ==============================
-pcall(function()
-  local ok, ctx = pcall(require, "treesitter-context")
-  if not ok or type(ctx.setup) ~= "function" then return end
-
-  -- More aggressive error handling
-  local function safe_get_parser(bufnr)
-    local ok, parser = pcall(vim.treesitter.get_parser, bufnr)
-    if not ok or not parser then return nil end
-    return parser
-  end
-
-  ctx.setup({
-    enable = true,
-    max_lines = 3000,         -- Reduced limit for safety
-    trim_scope = "outer",
-    patterns = {
-      default = { "class", "function", "method" },  -- Reduced pattern set
-    },
-    mode = 'cursor',          -- Only show context for cursor line
-    separator = '─',
-    -- Much stricter enabling conditions
-    enabled = function()
-      local ft = vim.bo.filetype
-      -- Skip more filetypes
-      if ft == "help" or ft == "markdown" or ft == "txt" or
-         ft == "gitcommit" or ft == "log" or ft == "" then
-        return false
-      end
-      
-      -- Skip large files
-      if vim.api.nvim_buf_line_count(0) > 3000 then return false end
-      
-      -- Skip if no valid parser
-      local bufnr = vim.api.nvim_get_current_buf()
-      if not safe_get_parser(bufnr) then return false end
-      
-      -- Skip if file is too large
-      local ok, stats = pcall(vim.loop.fs_stat, vim.api.nvim_buf_get_name(bufnr))
-      if ok and stats and stats.size > 1024 * 1024 then return false end  -- > 1MB
-      
-      return true
-    end,
-  })
-end)
-
--- ==============================
--- Done
--- ==============================
-print("✅ Neovim IDE setup loaded successfully!")
